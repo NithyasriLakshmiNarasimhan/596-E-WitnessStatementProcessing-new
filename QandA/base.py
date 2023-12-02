@@ -103,24 +103,29 @@ def UploadStatement():
   statement = request.json.get('statement')
   caseName = request.json.get('caseName')
   #  fileName = request.json.get('fileName')
-  mongo.store_in_db(statement,caseName)
+  return mongo.store_in_db(statement,caseName)
 
 @api.route('/process_text', methods=['POST'])
 def process_text():
 
     dir_name = request.json.get('text')
     question = request.json.get('question')
-    content = ""
-    path = 'C:/Users/nithy/Documents/GitHub/596-E-WitnessStatementProcessing/FrontEnd/reactapp/src/witnessstatements/'+ dir_name + '/'
-    with os.scandir(path) as dir_contents:
-      for entry in dir_contents:
-        filename = path + entry.name
-        with open(filename) as f:
-            lines = '\n'.join(f.readlines())
-            # print(lines)
-            content+=lines
-            content+='\n'
-    return openAI_QA(content, question)
+    # path = 'C:/Users/nithy/Documents/GitHub/596-E-WitnessStatementProcessing/FrontEnd/reactapp/src/witnessstatements/'+ dir_name + '/'
+    # with os.scandir(path) as dir_contents:
+    #   for entry in dir_contents:
+    #     filename = path + entry.name
+    #     with open(filename) as f:
+    #         lines = '\n'.join(f.readlines())
+    #         # print(lines)
+    #         content+=lines
+    #         content+='\n'
+    dict = mongo.show_mongodb_statements(dir_name)
+    statements = ""
+
+    for key in dict.keys():
+       statements+=dict[key]   
+       statements+='\n'
+    return openAI_QA(statements, question)
     # return content
     
     # Process the text_data here and return a response
@@ -175,19 +180,25 @@ def get_answers():
 
     dir_name = request.json.get('text')
 
-    content=""
-    path = 'C:/Users/nithy/Documents/GitHub/596-E-WitnessStatementProcessing/FrontEnd/reactapp/src/witnessstatements/'+ dir_name + '/'
-    with os.scandir(path) as dir_contents:
-      for entry in dir_contents:
-        filename = path + entry.name
-        with open(filename) as f:
-            lines = '\n'.join(f.readlines())
-            # print(lines)
-            content+=lines
-            content+='\n'
+    # content=""
+    # path = 'C:/Users/nithy/Documents/GitHub/596-E-WitnessStatementProcessing/FrontEnd/reactapp/src/witnessstatements/'+ dir_name + '/'
+    # with os.scandir(path) as dir_contents:
+    #   for entry in dir_contents:
+    #     filename = path + entry.name
+    #     with open(filename) as f:
+    #         lines = '\n'.join(f.readlines())
+    #         # print(lines)
+    #         content+=lines
+    #         content+='\n'
+    dict = mongo.show_mongodb_statements(dir_name)
+    statements = ""
+
+    for key in dict.keys():
+       statements+=dict[key]   
+       statements+='\n'
 
 
-    user_prompt = content
+    user_prompt = statements
     answers = []
     # for i in range(len(user_prompt)):
     response = get_openai_response(user_prompt, system_prompt)
