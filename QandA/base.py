@@ -28,7 +28,7 @@ from PIL import Image
 from io import BytesIO
 import matplotlib.pyplot as plt
 import networkx as nx
-
+import mongo
 
 
 
@@ -98,7 +98,12 @@ I will be giving you a few witness statements about a crime. Your task is to ans
 
   return get_openai_response(user_prompt, system_prompt)
 
-
+@api.route('/UploadStatement', methods=['POST'])
+def UploadStatement():
+  statement = request.json.get('statement')
+  caseName = request.json.get('caseName')
+  #  fileName = request.json.get('fileName')
+  mongo.store_in_db(statement,caseName)
 
 @api.route('/process_text', methods=['POST'])
 def process_text():
