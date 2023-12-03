@@ -3,9 +3,9 @@ from transformers import AutoModelForTokenClassification
 from transformers import pipeline
 import json
 import os
-model_name = "MaRiOrOsSi/t5-base-finetuned-question-answering"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelWithLMHead.from_pretrained(model_name)
+# model_name = "MaRiOrOsSi/t5-base-finetuned-question-answering"
+# tokenizer = AutoTokenizer.from_pretrained(model_name)
+# model = AutoModelWithLMHead.from_pretrained(model_name)
 from flask import Flask
 from flask import request
 import spacy
@@ -15,7 +15,6 @@ import json
 import openai
 from openai import OpenAI
 import json
-import openai
 from graphviz import Digraph
 from PIL import Image
 from io import BytesIO
@@ -29,53 +28,10 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import networkx as nx
 import mongo
+from openai_response import get_openai_response
 
-
-
-def compute_usage(response):
-    f = open('usage.json')
-    data = json.load(f)
-    data['input_tokens_used']+=response['usage']["prompt_tokens"]
-    data['output_tokens_used']+=response['usage']['completion_tokens']
-    with open('usage.json', 'w') as f:
-        json.dump(data, f)
-
-    
-# def get_openai_response(user_prompt, system_prompt):
-#     openai.api_key = "x"
-#     response = openai.ChatCompletion.create(
-#                   model="gpt-3.5-turbo",
-#                   messages=[{"role": "system", "content": system_prompt},
-#                             {"role": "user", "content": user_prompt}
-#                   ])
-#     compute_usage(response)
-#     return (response)
-
-def get_openai_response(user_prompt, system_prompt):
-    client = OpenAI(
-    # defaults to os.environ.get("OPENAI_API_KEY")
-    
-    api_key = "x"
-)
-
-    response = client.chat.completions.create(
-    messages=[
-        {
-            "role": "system",
-            "content": system_prompt
-        },
-              
-        {
-            "role": "user",
-            "content": user_prompt
-        }
-    ],
-    model="gpt-3.5-turbo",
-)
-    # compute_usage(response)
-    # print(response)
-    return (response.choices[0].message.content)
-
+from dynamicQA import get_answers_dynamic
+from staticgraph import get_static_answers
 
 
 
@@ -98,6 +54,7 @@ I will be giving you a few witness statements about a crime. Your task is to ans
 
   return get_openai_response(user_prompt, system_prompt)
 
+
 @api.route('/UploadStatement', methods=['POST'])
 def UploadStatement():
   statement = request.json.get('statement')
@@ -105,20 +62,12 @@ def UploadStatement():
   #  fileName = request.json.get('fileName')
   return mongo.store_in_db(statement,caseName)
 
+
 @api.route('/process_text', methods=['POST'])
 def process_text():
 
     dir_name = request.json.get('text')
     question = request.json.get('question')
-    # path = 'C:/Users/nithy/Documents/GitHub/596-E-WitnessStatementProcessing/FrontEnd/reactapp/src/witnessstatements/'+ dir_name + '/'
-    # with os.scandir(path) as dir_contents:
-    #   for entry in dir_contents:
-    #     filename = path + entry.name
-    #     with open(filename) as f:
-    #         lines = '\n'.join(f.readlines())
-    #         # print(lines)
-    #         content+=lines
-    #         content+='\n'
     dict = mongo.show_mongodb_statements(dir_name)
     statements = ""
 
@@ -126,12 +75,7 @@ def process_text():
        statements+=dict[key]   
        statements+='\n'
     return openAI_QA(statements, question)
-    # return content
-    
-    # Process the text_data here and return a response
-    # response = {"message": f"Processed text: {text_data}"}
-    # return str(response)
-
+ 
 
 @api.route('/getFileContent', methods = ['GET', 'POST', 'DELETE'])
 def getFileContent():
@@ -149,121 +93,18 @@ def getFileContent():
   return returnList
 
 
+@api.route('/DynamicQA', methods = ['GET', 'POST', 'DELETE'])
+def get_dynamic_answers():
+    case = request.json.get('text')
+    crime = request.json.get('crime')
+    return get_answers_dynamic(case, crime)
+
+
 @api.route('/StaticGraph', methods = ['GET', 'POST', 'DELETE'])
 def get_answers():
+    case = request.json.get('text')
 
-    system_prompt = """
-    I will be giving you a few witness statements about a crime. Your task is to answer the follow up questions in a clear and concise manner. The accuracy of this task is important and so, refrain from answering the questions whose answers are not mentioned in the statement.
-
-    These are the questions that you must answer based on the witness statements. Please limit your answer to 3 words or less.
-
-    What was the crime being discussed?
-    What is the gender of the criminal?,
-    What does the vehicle used in the crime look like?,
-    What did the criminal look like?,
-    What did the criminal wear?,
-    What did the criminal use to commit the crime?,
-    What was the criminal's ethnicity?,
-    What was the criminal's age?,
-    What did the victim look like?,
-    What did the victim wear?,
-    What was the victim's ethnicity?,
-    What was the gender of the victim?,
-    What was the age of the victim?
-
-    Return the answer as a python list.\\
-    If the answer to that question is not in the passage, leave it empty:
-
-    """
-
-    keys = ['crime', 'criminal gender', 'crime vehicle', 'criminal\'s appearance', 'criminal\'s clothes', 'criminal accessasory', 'crinimal\'s ethnicity', 'criminal\'s age', 'victim\'s appearance', 'victim\'s clothes', 'victim\'s ethnicity', 'victim\'s gender', 'victim\'s age']
-
-    dir_name = request.json.get('text')
-
-    # content=""
-    # path = 'C:/Users/nithy/Documents/GitHub/596-E-WitnessStatementProcessing/FrontEnd/reactapp/src/witnessstatements/'+ dir_name + '/'
-    # with os.scandir(path) as dir_contents:
-    #   for entry in dir_contents:
-    #     filename = path + entry.name
-    #     with open(filename) as f:
-    #         lines = '\n'.join(f.readlines())
-    #         # print(lines)
-    #         content+=lines
-    #         content+='\n'
-    dict = mongo.show_mongodb_statements(dir_name)
-    statements = ""
-
-    for key in dict.keys():
-       statements+=dict[key]   
-       statements+='\n'
-
-
-    user_prompt = statements
-    answers = []
-    # for i in range(len(user_prompt)):
-    response = get_openai_response(user_prompt, system_prompt)
-    print(response)
-    answer = ast.literal_eval(response)
-    answers.append(answer)    
-
-    description_of_the_crime = {}
-    for k, v in zip(keys, answer):
-        description_of_the_crime[k]=v
-    
-    nodes = []
-    
-    crime_desc = description_of_the_crime['crime']
-    nodes.append(crime_desc)
-    edges = []
-    colours = ['white']
-    for key in description_of_the_crime.keys():
-        # edges.append()
-
-        # s = key+":\n"+description_of_the_crime[key]
-        if 'crime'==key:
-            continue
-        nodes.append(key)
-        
-        if len(description_of_the_crime[key])>0 and  "not mentioned" not in str.lower(description_of_the_crime[key]):
-            # colours.append('white')
-            nodes.append(description_of_the_crime[key])
-            edges.append((key, description_of_the_crime[key]))
-        
-        if 'victim' in key:
-            edges.append((key,crime_desc))
-        else:
-            edges.append((crime_desc, key))  
-
-        if len(description_of_the_crime[key])<=0 or  "not mentioned" in str.lower(description_of_the_crime[key]):
-           colours.append('red')
-        else:
-          if 'victim' in key:
-            colours.append('blue')
-            colours.append('white')
-          else:
-            colours.append('green')
-            colours.append('white')
-
-
-    G = nx.DiGraph()
-    G.add_nodes_from(nodes)
-    G.add_edges_from(edges)
-
-    # Create Graphviz digraph for visualization
-    dot = Digraph(comment='Tree Visualization')
-
-    # Add nodes with colors
-    for node, color in zip(nodes, colours):
-        dot.node(str(node), str(node), color=color, style='filled')
-
-    # Add edges (optionally set edge colors)
-    for edge in edges:
-        dot.edge(str(edge[0]), str(edge[1]), color='gray')
-
-    # Generate and return the image
-    dot_format = 'png'  # Choose the desired image format (e.g., png, pdf, svg, etc.)
-    graph_bytes = dot.pipe(format=dot_format)
-
+    graph_bytes = get_static_answers(case)
     graph_bytesio = BytesIO(graph_bytes)
     image = Image.open(graph_bytesio)
     img_stream = BytesIO()
@@ -272,69 +113,7 @@ def get_answers():
 
     # Serve the image to the front end
     return send_file(img_stream, mimetype='image/png')
-    # G = nx.DiGraph()
 
-    # G.add_nodes_from(nodes, color=colours)
-
-    # G.add_edges_from(edges)
-
-
-    # nx.draw(G, with_labels=True, font_weight='bold', node_color=colours, edge_color='gray', node_size=800)
-        
-    # dot = Graph(comment='Tree Visualization')
-
-    # for node in nodes:
-    #     dot.node(str(node), str(node))
-
-    # for edge in list(edges):
-    #     dot.edge(str(edge[0]), str(edge[1]))
-
-    
-    
-    # dot_format = 'png'  # Choose the desired image format (e.g., png, pdf, svg, etc.)
-    # graph_bytes = dot.pipe(format=dot_format)
-    
-    # graph_bytesio = BytesIO(graph_bytes)
-    # image = Image.open(graph_bytesio)
-    # img_stream = BytesIO()
-    # image.save(img_stream, format='PNG')
-    # img_stream.seek(0)
-
-    # # Serve the image to the front end
-    # return send_file(img_stream, mimetype='image/png')
-  
-
-
-
-@api.route('/QandA', methods = ['GET', 'POST', 'DELETE'])
-def my_QandA():
-
-  if request.method == 'POST':
-    questions = ["What was the crime being discussed?", "What is the gender of the criminal?", "Was there a vehicle mentioned in the statements?", "What does the vehicle look like?", "What did the criminal look like?", "What did the criminal wear?", "What did the criminal use to commit the crime?", "What was the criminal's ethnicity?", "What was the criminal's age?", "What did the victim look like?", "What did the victim wear?", "What was the victim's ethnicity?", "What was the gender of the victim?", "What was the age of the victim?"]
-
-    statements = json.loads(request.data.decode())
-    context = statements['statement']
-    for newQ in (statements['questions']):
-      questions.append(newQ)
-    responses = []
-    for question in questions:
-      # question = "What was the age of the victim?"
-
-      input = f"question: {question} context: {context}"
-      encoded_input = tokenizer([input],
-                                  return_tensors='pt',
-                                  max_length=2048,
-                                  truncation=True)
-      output = model.generate(input_ids = encoded_input.input_ids,
-                                  attention_mask = encoded_input.attention_mask)
-      response = tokenizer.decode(output[0], skip_special_tokens=True)
-      responses.append(response)
-    output = questions[0] + ": " + responses[0]
-    for i in range(1, len(questions)):
-      output += "\n" + questions[i] + ": " + responses[i]
-    return output
-  else:
-    return "Error"
   
 
 
@@ -405,13 +184,7 @@ def doNer():
       else:
         idk.append([ner['word'], ner['entity']])
       
-  #   print(per)
-  #   print()
-  #   print(loc)
-  #   print()
-  #   print(misc)
-  #   print()
-  #   print(idk)
+  
     entity_arr = [per]+[loc]+[misc]+[idk]
     # print(entity_arr)
 

@@ -6,8 +6,10 @@ ca = certifi.where()
 import datetime
 # from NER import NER_func
 
+mongo_key = "Enter Mongo Key here!"
+
 def store_in_db(text,case_id):
-   CONNECTION_STRING = "mongodb+srv://mohit19sv:mohitsv@cluster0.hj4st4q.mongodb.net/witness_statement"
+   CONNECTION_STRING = mongo_key
    client = MongoClient(CONNECTION_STRING)
    db = client.witness_statement
    coll = db[case_id]
@@ -31,7 +33,7 @@ def store_in_db(text,case_id):
    return 'done'
 
 def show_mongodb_statements(case_id):
-   CONNECTION_STRING = "mongodb+srv://mohit19sv:mohitsv@cluster0.hj4st4q.mongodb.net/witness_statement"
+   CONNECTION_STRING = mongo_key
    client = MongoClient(CONNECTION_STRING, tlsCAFile=ca)
    # client = MongoClient(CONNECTION_STRING)
    db = client.witness_statement
@@ -44,7 +46,7 @@ def show_mongodb_statements(case_id):
    return dict_statements
 
 def show_mongodb_ner(case_id):
-   CONNECTION_STRING = "mongodb+srv://mohit19sv:mohitsv@cluster0.hj4st4q.mongodb.net/witness_statement"
+   CONNECTION_STRING = mongo_key
    client = MongoClient(CONNECTION_STRING)
    db = client.NER
    coll = db[case_id]
