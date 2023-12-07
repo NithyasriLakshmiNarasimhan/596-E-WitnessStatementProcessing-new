@@ -316,7 +316,7 @@ function GraphView() {
     return (
         <Box className="DynamicQA" sx={{ padding: 3 }}>
             <Typography variant="h4" gutterBottom>
-                Dynamic Q&A
+                Graph View of the Statements
             </Typography>
             <TextField 
                 label="Enter Case Number" 
