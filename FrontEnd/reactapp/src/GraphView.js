@@ -374,8 +374,6 @@ function GraphView() {
                         <ListItemText primary={"Open Cases"} />
                     </ListItem>
                     {fileNames.map(e => {
-
-
                         return (
                             <ListItemButton
                                 onClick={(event) => handleListItemClick(event, e)}
@@ -414,7 +412,7 @@ function GraphView() {
                 }}
                     variant="contained" onClick={handleSubmit}><SearchIcon fontSize='large'></SearchIcon> Generate Graph</Button>
             {imageSrc && (
-                <Card sx={{ maxWidth: '100%', marginTop: 2 }}>
+                <Card sx={{ maxWidth: '100%', marginLeft: 25, marginTop: 12 }}>
                     <CardMedia
                         component="img"
                         image={imageSrc}

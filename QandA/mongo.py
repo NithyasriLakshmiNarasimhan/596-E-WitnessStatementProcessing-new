@@ -6,7 +6,7 @@ ca = certifi.where()
 import datetime
 # from NER import NER_func
 
-mongo_key = "Mongo Key"
+mongo_key = "mongoKey"
 
 def store_in_db(text,case_id, nerDict, statementName):
    CONNECTION_STRING = mongo_key + "/witness_statement"

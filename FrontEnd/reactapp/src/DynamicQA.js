@@ -58,7 +58,8 @@ function DynamicQA() {
         );
     };
     const handleResponses = (response) => {
-        let newText = ""
+        setResponses(response);
+        let newText = "";
         response.forEach(function (qa) {
             let newLine = "";
             if (qa.answer === "") {
@@ -112,7 +113,23 @@ function DynamicQA() {
             <p>
                 <br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br>
                 <div style={{ position: 'relative', left: '20%', right: '10%', width: '70%' }}>
-                    {text}
+                    {responses.map(qa => {
+                        let answer = qa.answer;
+                        if (answer === "") {
+                            answer = "No Answer Found."
+                        }
+                        return (
+                            <div>
+                                <Typography variant="body1" style={{ fontWeight: 'bold' }}>
+                                    Question: {qa.question}
+                                </Typography>
+                                <Typography variant="body1">
+                                    Answer: {answer}
+                                </Typography>
+                            </div>
+
+                        )
+                    })}
                 </div>
             </p>
             <div className='center'>

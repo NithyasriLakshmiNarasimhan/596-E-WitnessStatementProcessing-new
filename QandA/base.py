@@ -47,6 +47,7 @@ from dynamicQA import get_answers_dynamic
 from staticgraph import get_static_answers
 from bson import json_util
 
+os.environ["PATH"] += os.pathsep + "C:/Users/uspeo/Downloads/Graphviz/bin"
 def parse_json(data):
     return json.loads(json_util.dumps(data))
 
@@ -189,8 +190,7 @@ def get_answers():
     print("line 170")
     print(response)
     answer = ast.literal_eval(response)
-    # answer = eval(response)
-    answer = response
+  
     answers.append(answer)    
 
     description_of_the_crime = {}
