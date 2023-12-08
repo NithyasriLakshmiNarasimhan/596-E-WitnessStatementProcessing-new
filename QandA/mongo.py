@@ -100,7 +100,7 @@ def show_mongodb_ner(case_id):
    return dict_NER
 
 def get_case_numbers():
-   CONNECTION_STRING = "mongodb+srv://mohit19sv:mohitsv@cluster0.hj4st4q.mongodb.net/witness_statement"
+   CONNECTION_STRING = mongo_key
    client = MongoClient(CONNECTION_STRING)
    db = client.witness_statement
    coll_list = db.list_collection_names()
