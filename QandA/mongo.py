@@ -6,10 +6,10 @@ ca = certifi.where()
 import datetime
 # from NER import NER_func
 
-mongo_key = "Enter Mongo Key here!"
+mongo_key = "mongodb+srv://mohit19sv:mohitsv@cluster0.hj4st4q.mongodb.net"
 
-def store_in_db(text,case_id):
-   CONNECTION_STRING = mongo_key
+def store_in_db(text,case_id, nerDict, statementName):
+   CONNECTION_STRING = mongo_key + "/witness_statement"
    client = MongoClient(CONNECTION_STRING)
    db = client.witness_statement
    coll = db[case_id]
@@ -18,9 +18,11 @@ def store_in_db(text,case_id):
    
    emp_rec1 = {
         "Timestamp": curr_time,
+        "Statement Name": statementName,
         "Case ID": case_id,
-        "Statement": text
-        } 
+        "Statement": text,
+        "NER": nerDict
+        }
    coll.insert_one(emp_rec1)
 
    # ner_result = NER_func(text)
@@ -33,7 +35,7 @@ def store_in_db(text,case_id):
    return 'done'
 
 def show_mongodb_statements(case_id):
-   CONNECTION_STRING = mongo_key
+   CONNECTION_STRING = mongo_key+ "/witness_statement"
    client = MongoClient(CONNECTION_STRING, tlsCAFile=ca)
    # client = MongoClient(CONNECTION_STRING)
    db = client.witness_statement
@@ -42,8 +44,47 @@ def show_mongodb_statements(case_id):
    dict_statements = {} 
    for record in cursor:
       dict_statements[len(dict_statements)+1] = record['Statement']
-      print(record['Statement'])
+      # print("mongypy 45")
+      # print(record['Statement'])
    return dict_statements
+
+def show_mongodb_statement_names(case_id):
+   CONNECTION_STRING = mongo_key+ "/witness_statement"
+   client = MongoClient(CONNECTION_STRING, tlsCAFile=ca)
+   # client = MongoClient(CONNECTION_STRING)
+   db = client.witness_statement
+   coll=db[case_id]
+   cursor = coll.find()
+   list_statements = []
+   for record in cursor:
+      list_statements.append(record['Statement Name'])
+      # print("mongypy 45")
+      # print(record['Statement'])
+   return list_statements
+
+def getMongoDBStatement(case_id, statementName):
+   CONNECTION_STRING = mongo_key+ "/witness_statement"
+   client = MongoClient(CONNECTION_STRING, tlsCAFile=ca)
+   # client = MongoClient(CONNECTION_STRING)
+   db = client.witness_statement
+   coll=db[case_id]
+   cursor = coll.find()
+   list_statements = []
+
+   for record in cursor:
+      if(record['Statement Name'] == statementName):
+         # print(type(record))
+         return record
+   return {}
+
+def show_mongodb_case_names():
+   CONNECTION_STRING = mongo_key + "/witness_statement"
+   client = MongoClient(CONNECTION_STRING, tlsCAFile=ca)
+   db = client.get_database("witness_statement")
+   list_collections = db.list_collection_names()
+
+   return(list_collections)
+   
 
 def show_mongodb_ner(case_id):
    CONNECTION_STRING = mongo_key
@@ -58,4 +99,4 @@ def show_mongodb_ner(case_id):
       dict_NER[len(dict_NER)+1] = record_new
    return dict_NER
 
-# show_mongodb_statements('John')
+# print(getMongoDBStatement("EricsCase", "SampleStatement1.txt"))

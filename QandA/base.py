@@ -10,7 +10,7 @@ from flask import Flask
 from flask import request
 import spacy
 api = Flask(__name__)
-import tensorflow as tf
+# import tensorflow as tf
 import json
 import openai
 from openai import OpenAI
@@ -45,19 +45,35 @@ from openai_response import get_openai_response
 
 from dynamicQA import get_answers_dynamic
 from staticgraph import get_static_answers
+from bson import json_util
+
+def parse_json(data):
+    return json.loads(json_util.dumps(data))
 
 
+@api.route('/getCaseNames', methods = ['GET', 'POST', 'DELETE'])
+def getCaseNames():
+  return mongo.show_mongodb_case_names()
 
+@api.route('/getStatement', methods = ['GET', 'POST', 'DELETE'])
+def getStatement():
+  statements = json.loads(request.data.decode())
+  fileName = statements['fileNum']
+  caseName = statements['caseNum']
+  return json.loads(json_util.dumps(mongo.getMongoDBStatement(caseName, fileName)))
 
 @api.route('/getFiles', methods = ['GET', 'POST', 'DELETE'])
 def getCaseFiles():
   statements = json.loads(request.data.decode())
-  context = statements['fileNum']
-  statementsPath = "./Statements"
-  fileString = ""
-  for fileName in os.listdir(statementsPath):
-    fileString += fileName + '\n'
-  return os.listdir(statementsPath)
+  caseNum = statements['case']
+  # # caseNum = 0
+  # # caseNum = statements['case']
+  # statementsPath = "./Statements"
+  # fileString = ""
+  # for fileName in os.listdir(statementsPath):
+  #   fileString += fileName + '\n'
+  return mongo.show_mongodb_statement_names(caseNum)
+  # return os.listdir(statementsPath)
 
 def openAI_QA(context, question):
   system_prompt = """
@@ -79,12 +95,14 @@ def UploadStatement():
 @api.route('/process_text', methods=['POST'])
 def process_text():
 
-    dir_name = request.json.get('text')
+    dir_name = request.json.get('currCaseName')
     question = request.json.get('question')
+    
     dict = mongo.show_mongodb_statements(dir_name)
     statements = ""
 
     for key in dict.keys():
+       print(dict[key])
        statements+=dict[key]   
        statements+='\n'
     return openAI_QA(statements, question)
@@ -99,7 +117,8 @@ def getFileContent():
   if(os.path.isdir(filePath)):
     returnList[0] = os.listdir(filePath)
   if(os.path.isfile(filePath)):
-    fileString = os.path.basename(filePath) + '\n' + '\n'
+    fileString = ""
+    # fileString = os.path.basename(filePath) + '\n' + '\n'
     file=open(filePath,"r")
     fileString += file.read()
     returnList[1] = fileString
@@ -108,14 +127,14 @@ def getFileContent():
 
 @api.route('/DynamicQA', methods = ['GET', 'POST', 'DELETE'])
 def get_dynamic_answers():
-    case = request.json.get('text')
+    case = request.json.get('currCaseName')
     crime = request.json.get('crime')
     return get_answers_dynamic(case, crime)
 
 
 @api.route('/StaticGraph', methods = ['GET', 'POST', 'DELETE'])
 def get_answers():
-    case = request.json.get('text')
+    case = request.json.get('currCaseName')
 
     system_prompt = """
     I will be giving you a few witness statements about a crime. Your task is to answer the follow up questions in a clear and concise manner. The accuracy of this task is important and so, refrain from answering the questions whose answers are not mentioned in the statement.
@@ -167,8 +186,11 @@ def get_answers():
     answers = []
     # for i in range(len(user_prompt)):
     response = get_openai_response(user_prompt, system_prompt)
+    print("line 170")
     print(response)
     answer = ast.literal_eval(response)
+    # answer = eval(response)
+    answer = response
     answers.append(answer)    
 
     description_of_the_crime = {}
@@ -246,6 +268,9 @@ def get_answers():
 def doNer():
   statements = json.loads(request.data.decode())
   statement = statements['statement']
+  caseName = statements['caseName']
+  fileName = statements['fileName']
+
   # import usaddress
 
   tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
@@ -309,7 +334,13 @@ def doNer():
       else:
         idk.append([ner['word'], ner['entity']])
       
-  
+  #   print(per)
+  #   print()
+  #   print(loc)
+  #   print()
+  #   print(misc)
+  #   print()
+  #   print(idk)
     entity_arr = [per]+[loc]+[misc]+[idk]
     # print(entity_arr)
 
@@ -362,11 +393,24 @@ def doNer():
     entity_dict.update(date_dict)
     return entity_dict
   d = NER_func(statement)
-  output = ""
+  output = "Named Entity Recognition Results:\n"
+  # NERFile = open("./Cases/" + caseName + "/" + fileName[:-4] + "NER.txt","a")
+  path = "./Statements/"+ caseName
+  exists = os.path.exists(path)
+  if(not exists):
+    os.mkdir(path)
+  statementFile = {}
   for k,v in d.items():
     output += k +": "
+    statementFile[k] = []
     v = set(v)
     for name in v:
+      statementFile[k].append(name)
       output += name + ", "
     output += "\n"
+  # statementFile["witness_statement"] = statement
+  # NERFile = open(path + "/" + fileName[:-4] + "_Analysis","a")
+  # json.dump(statementFile, NERFile)
+  # NERFile.close()
+  mongo.store_in_db(statement, caseName, statementFile, fileName)
   return output

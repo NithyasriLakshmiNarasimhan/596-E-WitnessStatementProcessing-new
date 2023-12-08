@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import Analyze from "./Analyze"
 import Statements from "./Statements"
 import InteractiveQA from "./InteractiveQA"
-import DynamicQA from "./dynamicQA"
+import DynamicQA from "./DynamicQA"
 import GraphView from './GraphView';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';

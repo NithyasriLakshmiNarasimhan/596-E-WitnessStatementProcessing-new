@@ -30,7 +30,8 @@ def get_answers_dynamic(case_no, crime):
    
 
     answers = get_openai_response(user_prompt, system_prompt)
-    answers = ast.literal_eval(answers)
+    print(answers)
+    answers = ast.literal_eval(answers) 
     return answers
-
-print(get_answers_dynamic('1234', 'kidnapping'))
+# print("dynQA")
+# (get_answers_dynamic('1234', 'kidnapping'))

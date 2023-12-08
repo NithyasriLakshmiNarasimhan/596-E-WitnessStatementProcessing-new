@@ -6,7 +6,7 @@ def get_openai_response(user_prompt, system_prompt):
     client = OpenAI(
     # defaults to os.environ.get("OPENAI_API_KEY")
     
-    api_key = "enter openAI key here!"
+    api_key = "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"
 )
 
     response = client.chat.completions.create(

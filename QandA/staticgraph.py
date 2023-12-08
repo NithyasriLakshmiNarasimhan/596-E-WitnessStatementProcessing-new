@@ -63,6 +63,7 @@ def get_static_answers(case):
     answers = []
     # for i in range(len(user_prompt)):
     response = get_openai_response(user_prompt, system_prompt)
+    print("static 66")
     print(response)
     answer = ast.literal_eval(response)
     answers.append(answer)    
