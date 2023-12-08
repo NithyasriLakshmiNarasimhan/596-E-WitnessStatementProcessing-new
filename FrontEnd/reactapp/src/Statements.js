@@ -2,7 +2,6 @@ import './Statements.css';
 
 import { usePromiseTracker } from "react-promise-tracker";
 import { TailSpin } from "react-loader-spinner";
-// import CaseList from './CaseList'
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -99,8 +98,8 @@ function Statements() {
                         const res = response.data
                         // setFileContent(res[1]);
 
-                        setFileContent(res['Statement']);
-                        let viewNER = "";
+                        setFileContent("Witness Statement:\n" + res['Statement']);
+                        let viewNER = "NER Results:\n";
                         let highlights = [];
                         let analysis = res['NER'];
                         for (var key in analysis) {
@@ -210,7 +209,6 @@ function Statements() {
                     {currFileName}<br></br><br></br>
                     {showNER}<br></br><br></br>
                     {highlightWords(fileContent, highlightedWords)}
-                    {/* {fileContent} */}
                 </div>
             </p>
             <div className='center'>
