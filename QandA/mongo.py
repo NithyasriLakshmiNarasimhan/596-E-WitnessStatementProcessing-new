@@ -56,4 +56,12 @@ def show_mongodb_ner(case_id):
       dict_NER[len(dict_NER)+1] = record_new
    return dict_NER
 
+def get_case_numbers():
+   CONNECTION_STRING = "mongodb+srv://mohit19sv:mohitsv@cluster0.hj4st4q.mongodb.net/witness_statement"
+   client = MongoClient(CONNECTION_STRING)
+   db = client.witness_statement
+   coll_list = db.list_collection_names()
+   print(coll_list)
+
+# get_case_numbers()
 # show_mongodb_statements('John')

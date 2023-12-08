@@ -10,7 +10,7 @@ from flask import Flask
 from flask import request
 import spacy
 api = Flask(__name__)
-import tensorflow as tf
+# import tensorflow as tf
 import json
 import openai
 from openai import OpenAI
